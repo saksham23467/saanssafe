@@ -1,8 +1,11 @@
 const $=s=>document.querySelector(s);
 const CATS=[["Good","#009933"],["Satisfactory","#58A618"],["Moderate","#E6C700"],["Poor","#F28C00"],["Very Poor","#E02020"],["Severe","#7E0023"]];
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
-  document.querySelectorAll(".view").forEach(v=>v.hidden=v.id!==t.dataset.view)});
+const ROUTES={"":"single","districts":"multi","alerts":"alerts","about":"about"};
+function route(){const k=location.hash.replace(/^#\/?/,"");const v=ROUTES[k]||"single";
+  document.querySelectorAll(".tab").forEach(x=>{const on=x.dataset.view===v;x.classList.toggle("on",on);on?x.setAttribute("aria-current","page"):x.removeAttribute("aria-current")});
+  document.querySelectorAll(".view").forEach(s=>s.hidden=s.id!==v);window.scrollTo(0,0)}
+window.addEventListener("hashchange",route);route();
 
 $("#f").onsubmit=async e=>{e.preventDefault();const b=e.submitter||$("#f .primary");b.disabled=true;b.textContent="Checking the air…";
   $("#err").hidden=true;$("#out").hidden=true;const sk=document.createElement("div");sk.className="skeleton";$("#f").after(sk);
@@ -17,14 +20,14 @@ function render(d){const p=d.plan,c=p.current,k=c.category;const h=$("#hero");
    <span class="catbadge">${esc(k.name)}</span><div class="meta">PM2.5 ${c.pm2_5} µg/m³ · PM10 ${c.pm10} µg/m³ · dominant ${c.dominant}${p.max_feels_like!=null?` · feels like up to ${Math.round(p.max_feels_like)}°C`:""}</div>
    <div class="scale">${CATS.map((x,i)=>`<i style="background:${x[1]}" class="${i===idx?"me":""}" title="${x[0]}"></i>`).join("")}</div>
    <p class="health"><b>CPCB health note:</b> ${esc(k.health)}</p>`;
-  const card=$("#headline").closest(".card");card.className="card status-"+p.status;
-  $("#headline").textContent=p.headline;$("#actions").innerHTML=p.actions.map(a=>`<li>${esc(a)}</li>`).join("");
+  $("#headline").closest(".decision").className="decision status-"+p.status;$("#headline").closest(".decision").style.setProperty("--cat",k.color);
+  $("#headline").textContent=p.headline;$("#reason").textContent=`Air quality in ${d.label.split(",")[0]} is ${k.name} (AQI ${c.aqi})`+(p.safe_window?`, safest outdoors ${pad(p.safe_window[0])}:00–${pad(p.safe_window[1])}:00.`:", with no safe outdoor window in school hours.");$("#actions").innerHTML=p.actions.map(a=>`<li>${esc(a)}</li>`).join("");
   $("#charttitle").textContent=`Air quality on ${new Date(p.day).toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"short"})}`;
   const w=$("#window");if(p.safe_window){w.className="pill";w.textContent=`Safe outdoor window ${pad(p.safe_window[0])}:00–${pad(p.safe_window[1])}:00`}else{w.className="pill no";w.textContent="No safe outdoor window in school hours"}
   chart(p.hours,p.safe_window);outlook(d.outlook||[]);
   $("#en").textContent=d.notice.english;$("#hi").textContent=d.notice.hindi;
   const msg=d.notice.english+"\n\n"+d.notice.hindi;$("#wa").href="https://wa.me/?text="+encodeURIComponent(msg);
-  $("#copy").onclick=async()=>{await navigator.clipboard.writeText(msg).catch(()=>{});$("#copy").textContent="Copied ✓";setTimeout(()=>$("#copy").textContent="Copy",1500)};
+  $("#copy").onclick=async()=>{await navigator.clipboard.writeText(msg).catch(()=>{});$("#copy").textContent="Copied";setTimeout(()=>$("#copy").textContent="Copy",1500)};
   $("#summary").textContent=d.summary;$("#mode").textContent=d.mode==="agent"?"· Strands agent":"· deterministic mode (no LLM)";
   $("#out").hidden=false;}
 const pad=n=>String(n).padStart(2,"0");
