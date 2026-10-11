@@ -12,4 +12,4 @@
 - Amazon DynamoDB (subscriptions) and Amazon SNS (email alert delivery)
 - Deployment path for AWS Lambda (SAM template + Mangum) and AWS App Runner (Dockerfile)
 
-**Repo:** <add GitHub link> · **Demo video:** <add link>
+**Repo:** https://github.com/saksham23467/saanssafe · **Demo video:** <add link>
