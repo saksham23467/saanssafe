@@ -115,3 +115,7 @@ Level = CPCB category of the 24-h average, raised by one step less than the wors
 - SNS email delivery sends one message per alert to everyone confirmed on the topic; per-school email/WhatsApp routing (SNS per-recipient, SES or WhatsApp Business API) is a next step. WhatsApp numbers are stored but not messaged automatically.
 - Read-aloud quality depends on the voices installed on the device. Chrome and Android usually have a Hindi voice; some desktops don't, and the browser's default voice is then used.
 - Guidance is general, not medical advice. Hindi text is template-generated; have a native speaker review it before wide use.
+
+## Team
+
+Saksham Bansal, Ronit Ghosh, Ujjwal Kumar, Rahul Agarwal (IIIT Delhi)

@@ -13,3 +13,7 @@
 - Deployed live with AWS SAM: AWS Lambda + Amazon API Gateway (HTTP API) in ap-south-1; Dockerfile for AWS App Runner as an alternative
 
 **Live demo:** https://us92heu19l.execute-api.ap-south-1.amazonaws.com/ (AWS Lambda + API Gateway + EventBridge + DynamoDB + SNS, ap-south-1) · **Repo:** https://github.com/saksham23467/saanssafe · **Demo video:** <add link>
+
+## Team
+
+Saksham Bansal, Ronit Ghosh, Ujjwal Kumar, Rahul Agarwal (IIIT Delhi)
