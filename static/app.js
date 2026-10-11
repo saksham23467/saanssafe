@@ -29,7 +29,11 @@ function render(d){const p=d.plan,c=p.current,k=c.category;const h=$("#hero");
   const msg=d.notice.english+"\n\n"+d.notice.hindi;$("#wa").href="https://wa.me/?text="+encodeURIComponent(msg);
   $("#copy").onclick=async()=>{await navigator.clipboard.writeText(msg).catch(()=>{});$("#copy").textContent="Copied";setTimeout(()=>$("#copy").textContent="Copy",1500)};
   $("#summary").textContent=d.summary;$("#mode").textContent=d.mode==="agent"?"· Strands agent":"· deterministic mode (no LLM)";
-  $("#out").hidden=false;}
+  $("#out").hidden=false;$("#empty").hidden=true;timeline(p.hours,p.safe_window);}
+document.querySelectorAll(".chipbtn").forEach(b=>b.onclick=()=>{$("#place").value=b.dataset.city;$("#f").requestSubmit()});
+function timeline(hs,win){const sh=hs.filter(x=>x.school);if(!sh.length){$("#timeline").innerHTML="";return}
+  $("#timeline").innerHTML=`<div class="tl">${sh.map(x=>{const ok=win&&x.hour>=win[0]&&x.hour<win[1];return `<div class="tlh ${ok?"ok":""}" title="${pad(x.hour)}:00 · AQI ${x.aqi} ${esc(x.category)}">
+   <span class="bar" style="background:${x.color}"></span><b>${pad(x.hour)}:00</b><span class="v">${x.aqi}</span><small>${esc(x.category)}</small>${ok?'<em>Safe</em>':''}</div>`}).join("")}</div>`}
 const pad=n=>String(n).padStart(2,"0");
 
 function chart(hs,win){const W=960,H=230,L=36,B=26,T=10,n=hs.length;if(!n){$("#chart").innerHTML="<p class=note>No hourly data.</p>";return}
@@ -48,12 +52,19 @@ function outlook(o){$("#outlook").innerHTML=o.map(d=>`<div class="day ${d.indoor
 
 $("#mf").onsubmit=async e=>{e.preventDefault();const b=$("#mf .primary");b.disabled=true;b.textContent="Ranking…";$("#mout").innerHTML='<div class="skeleton"></div>';
   try{const r=await fetch("/api/rank",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({places:$("#places").value.split("\n")})});const rows=await r.json();
-  $("#mout").innerHTML=`<table><thead><tr><th>#</th><th>Locality</th><th>AQI now</th><th class="hide-sm">Peak in school hours</th><th>Decision</th><th class="hide-sm">Outdoor window</th></tr></thead><tbody>${
-   rows.map((x,i)=>x.error?`<tr><td>${i+1}</td><td>${esc(x.query)}</td><td colspan=4>${esc(x.error)}</td></tr>`:`<tr><td>${i+1}</td><td>${esc(x.label)}</td>
-   <td><span class="chip" style="background:${x.color};color:${x.fg}">${x.aqi} · ${esc(x.category)}</span></td><td class="hide-sm">${x.peak}</td>
-   <td><b>${esc(x.headline)}</b></td><td class="hide-sm">${x.window?pad(x.window[0])+":00–"+pad(x.window[1])+":00":"None"}</td></tr>`).join("")}</tbody></table>
-   <p class="note">Ranked by recommended action level, then by forecast peak AQI during school hours.</p>`}
+  RANK=rows;drawRank()}
   catch(x){$("#mout").innerHTML=`<div class="err">${esc(x.message)}</div>`}finally{b.disabled=false;b.textContent="Rank schools"}};
+let RANK=[],SORT={k:null,d:1};
+function drawRank(){let rows=RANK.map((x,i)=>({...x,rank:i+1}));
+  if(SORT.k)rows=[...rows].sort((a,b)=>{const g=r=>SORT.k==="label"?(r.label||r.query||""):(r[SORT.k]??-1);const A=g(a),B=g(b);return (A>B?1:A<B?-1:0)*SORT.d});
+  const mx=500;const th=(k,t,c="")=>`<th class="${c}"><button class="sort" data-k="${k}">${t}${SORT.k===k?(SORT.d>0?" ↑":" ↓"):""}</button></th>`;
+  $("#mout").innerHTML=`<div class="tablewrap"><table class="rank"><thead><tr>${th("rank","#")}${th("label","Locality")}${th("aqi","AQI now")}${th("peak","Peak in school hours","hide-sm")}<th>Decision</th><th class="hide-sm">Outdoor window</th></tr></thead><tbody>${
+   rows.map(x=>x.error?`<tr><td>${x.rank}</td><td>${esc(x.query)}</td><td colspan=4>${esc(x.error)}</td></tr>`:`<tr><td class="num2">${x.rank}</td><td><b>${esc(x.label.split(",")[0])}</b><br><small>${esc(x.label.split(",").slice(1).join(",").trim())}</small></td>
+   <td><span class="chip" style="background:${x.color};color:${x.fg}">${x.aqi}</span> <small>${esc(x.category)}</small></td>
+   <td class="hide-sm"><div class="hbar"><i style="width:${Math.min(100,x.peak/mx*100)}%;background:${x.color}"></i></div><small>${x.peak}</small></td>
+   <td>${esc(x.headline)}</td><td class="hide-sm">${x.window?pad(x.window[0])+":00–"+pad(x.window[1])+":00":"None"}</td></tr>`).join("")}</tbody></table></div>
+   <p class="note">Default order: recommended action level, then forecast peak AQI during school hours.</p>`;
+  document.querySelectorAll(".sort").forEach(b=>b.onclick=()=>{const k=b.dataset.k;SORT=SORT.k===k?{k,d:-SORT.d}:{k,d:k==="label"||k==="rank"?1:-1};drawRank()})}
 
 // ---------------------------------------------------------------- voice (Web Speech API)
 const synth=window.speechSynthesis;let voices=[];
