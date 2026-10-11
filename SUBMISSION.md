@@ -10,6 +10,6 @@
 - Amazon Bedrock (Amazon Nova Lite by default) as the model provider when AWS credentials exist
 - Amazon EventBridge schedule (`cron(30 1 * * ? *)`, 07:00 IST) → AWS Lambda daily-alert job
 - Amazon DynamoDB (subscriptions) and Amazon SNS (email alert delivery)
-- Deployment path for AWS Lambda (SAM template + Mangum) and AWS App Runner (Dockerfile)
+- Deployed live with AWS SAM: AWS Lambda + Amazon API Gateway (HTTP API) in ap-south-1; Dockerfile for AWS App Runner as an alternative
 
-**Repo:** https://github.com/saksham23467/saanssafe · **Demo video:** <add link>
+**Live demo:** https://us92heu19l.execute-api.ap-south-1.amazonaws.com/ (AWS Lambda + API Gateway + EventBridge + DynamoDB + SNS, ap-south-1) · **Repo:** https://github.com/saksham23467/saanssafe · **Demo video:** <add link>

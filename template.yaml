@@ -3,8 +3,9 @@ Transform: AWS::Serverless-2016-10-31
 Description: SaansSafe - school air-quality decisions (FastAPI on Lambda via Mangum) + daily 07:00 IST alerts
 Globals:
   Function:
-    Timeout: 60
+    Timeout: 30
     MemorySize: 512
+    Architectures: [x86_64]
 Parameters:
   AlertEmail:
     Type: String
@@ -16,13 +17,12 @@ Resources:
   SaansSafeFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: .
+      CodeUri: .lambda/
       Handler: app.handler
-      Runtime: python3.12
+      Runtime: python3.13
       Environment:
         Variables:
-          SAANSSAFE_PROVIDER: bedrock
-          BEDROCK_MODEL_ID: us.amazon.nova-lite-v1:0
+          SAANSSAFE_PROVIDER: none
           SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
           ALERTS_TOPIC_ARN: !Ref AlertsTopic
       Policies:
@@ -30,18 +30,23 @@ Resources:
             TableName: !Ref SubscriptionsTable
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt AlertsTopic.TopicName
-        - Statement:
-            - Effect: Allow
-              Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
-              Resource: '*'
-      FunctionUrlConfig:
-        AuthType: NONE
+      Events:
+        Web:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+        Root:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
   DailyAlertsFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: .
+      CodeUri: .lambda/
       Handler: alerts_handler.handler
-      Runtime: python3.12
+      Runtime: python3.13
       Timeout: 300
       Environment:
         Variables:
@@ -83,7 +88,7 @@ Resources:
       Endpoint: !Ref AlertEmail
 Outputs:
   Url:
-    Value: !GetAtt SaansSafeFunctionUrl.FunctionUrl
+    Value: !Sub https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/
   AlertsTopicArn:
     Value: !Ref AlertsTopic
   SubscriptionsTableName:

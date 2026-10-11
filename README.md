@@ -1,5 +1,8 @@
 # SaansSafe (सांस सेफ) — school decisions for bad-air days
 
+**Live demo (AWS, ap-south-1):** https://us92heu19l.execute-api.ap-south-1.amazonaws.com/
+
+
 **Track:** Air · **Built with:** Strands Agents SDK (AWS open source) · Amazon Bedrock (optional) · Amazon EventBridge + AWS Lambda + DynamoDB + SNS for daily alerts · deployable via AWS SAM / App Runner
 
 ## The problem
@@ -56,7 +59,7 @@ flowchart LR
 - **Strands Agents SDK** (AWS open source) is the agent framework: six `@tool` functions in `saanssafe/tools.py`, agent in `saanssafe/agent.py`.
 - **Amazon Bedrock** is the default model provider when AWS credentials are present (`BEDROCK_MODEL_ID`, default Amazon Nova Lite).
 - **Daily alerts on AWS** (`template.yaml`): an **Amazon EventBridge** schedule `cron(30 1 * * ? *)` (01:30 UTC = 07:00 IST) triggers the **AWS Lambda** `DailyAlertsFunction` (`alerts_handler.handler`), which reads subscribers from an **Amazon DynamoDB** table (on-demand billing) and publishes each alert to an **Amazon SNS** topic (email). The web Lambda writes subscriptions to the same table. Store and delivery are pluggable: set `SUBSCRIPTIONS_TABLE` to use DynamoDB and `ALERTS_TOPIC_ARN` to use SNS; without them the app uses `data/subscriptions.json` and `data/outbox.json`.
-- **Deploy**: `template.yaml` (AWS SAM → web Lambda + Function URL via Mangum, alert Lambda, schedule, table, topic; optional `AlertEmail` parameter subscribes an email to the topic) or `Dockerfile` (AWS App Runner). Not deployed by default. The template passes `cfn-lint`.
+- **Deploy**: `template.yaml` (AWS SAM → web Lambda + API Gateway HTTP API via Mangum, alert Lambda, schedule, table, topic; optional `AlertEmail` parameter subscribes an email to the topic) or `Dockerfile` (AWS App Runner). The template passes `cfn-lint`.
 
 ## Run locally
 ```bash
@@ -72,9 +75,19 @@ Provider selection (`SAANSSAFE_PROVIDER=auto`): Bedrock if AWS creds exist → O
 
 ### Deploy (optional)
 ```bash
-sam build && sam deploy --guided          # web Lambda + Function URL, 7 AM alert Lambda, EventBridge schedule, DynamoDB, SNS
+./scripts/build_lambda_src.sh && sam build && sam deploy --guided   # API Gateway + web Lambda, 7 AM alert Lambda, EventBridge schedule, DynamoDB, SNS
 # or: docker build -t saanssafe . and deploy the image with AWS App Runner (port 8080)
 ```
+
+## Live deployment (AWS)
+Live at **https://us92heu19l.execute-api.ap-south-1.amazonaws.com/** — CloudFormation stack `saanssafe` in **ap-south-1 (Mumbai)**, deployed with AWS SAM:
+- **Amazon API Gateway (HTTP API)** → **AWS Lambda** `SaansSafeFunction` (Python 3.13, 512 MB, 30 s, FastAPI via Mangum) serving the UI and `/api/*`, deterministic mode (`SAANSSAFE_PROVIDER=none`, no LLM key needed); calls Open-Meteo over HTTPS.
+- **Amazon EventBridge** rule `saanssafe-daily-7am-ist` (`cron(30 1 * * ? *)`) → **AWS Lambda** `DailyAlertsFunction`.
+- **Amazon DynamoDB** subscriptions table (on-demand) and **Amazon SNS** alerts topic (no subscribers by default).
+- No VPC, NAT or provisioned concurrency; fits within the AWS free tier for demo traffic.
+
+Redeploy: `./scripts/build_lambda_src.sh && sam build && sam deploy --stack-name saanssafe --region ap-south-1 --resolve-s3 --capabilities CAPABILITY_IAM`
+Teardown: `sam delete --stack-name saanssafe --region ap-south-1`
 
 ## CPCB National AQI breakpoints used (24-hr avg, µg/m³)
 | Category | AQI | PM2.5 | PM10 |

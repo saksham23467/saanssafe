@@ -2,6 +2,8 @@
 
 Setup: `uvicorn app:app --port 8000`, browser at http://localhost:8000, zoom 110%. Pre-run Delhi once so data is cached. Before recording, subscribe 2 schools on the Morning alerts tab (e.g. "DPS Rohini / Rohini, Delhi" and "KV Lucknow / Lucknow"), and record in Chrome so a Hindi voice is available (test the Listen button first; if there's no Hindi voice, show the English Listen instead and mention Hindi works on Chrome/Android). Record at 1280×800.
 
+**Live on AWS:** https://us92heu19l.execute-api.ap-south-1.amazonaws.com/ — running on AWS Lambda + API Gateway + EventBridge + DynamoDB + SNS in ap-south-1 (Mumbai). Record the demo on this URL and say so on screen.
+
 | Time | Screen / click | Say | Judging criterion |
 |---|---|---|---|
 | 0:00–0:12 | Title card, then the empty SaansSafe page | "On severe-air days in Delhi, schools have been ordered shut or moved online. On every other bad-air day, a principal decides alone at 7 AM: assembly outside? sports? what do I tell parents? SaansSafe answers that." | **Impact** (hook) |
