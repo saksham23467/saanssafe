@@ -3,7 +3,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SaansSafe — school decisions for bad-air days</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600&display=swap">
-<link rel="stylesheet" href="/static/styles.css?v=1791727284">
+<link rel="stylesheet" href="/static/styles.css?v=1791727853">
 </head><body>
 <header class="top"><div class="wrap row">
   <div class="brand"><a href="#/" class="brandlink"><span class="mark" aria-hidden="true"></span>SaansSafe</a> <small>सांस सेफ</small></div>
@@ -105,7 +105,7 @@ Lucknow</textarea>
   <article class="card">
     <div class="cardhead"><div><div class="eyebrow">Subscribed schools</div><h3 id="subcount">No schools yet</h3></div>
       <button id="runnow" class="primary" type="button">Preview tomorrow's 7 AM alert</button></div>
-    <div class="schedcard"><div class="clock">7:00<small>AM IST</small></div><div><b>Every day 7:00 AM IST via Amazon EventBridge</b><p class="note">Schedule <code>cron(30 1 * * ? *)</code> → AWS Lambda builds each school's plan → subscribers from Amazon DynamoDB → delivered through Amazon SNS.</p></div></div>
+    <div class="schedcard"><div class="clock">7:00<small>AM IST</small></div><div><b>Every day 7:00 AM IST via Amazon EventBridge</b><p class="note">Each morning, AWS Lambda builds each school's plan → subscribers from Amazon DynamoDB → delivered through Amazon SNS.</p></div></div>
     <ul id="subs" class="subs"></ul>
   </article>
   <div id="aout"></div>
@@ -137,7 +137,7 @@ Lucknow</textarea>
   <table><tbody>
   <tr><th>AWS Lambda</th><td>Runs the FastAPI app and the daily alert job.</td></tr>
   <tr><th>Amazon API Gateway</th><td>Public HTTPS endpoint for the web app and API.</td></tr>
-  <tr><th>Amazon EventBridge</th><td>Schedule <code>cron(30 1 * * ? *)</code> triggers alerts at 07:00 IST.</td></tr>
+  <tr><th>Amazon EventBridge</th><td>Triggers the alert job every day at 7:00 AM IST.</td></tr>
   <tr><th>Amazon DynamoDB</th><td>Stores subscribed schools.</td></tr>
   <tr><th>Amazon SNS</th><td>Delivers the morning alert by email.</td></tr>
   <tr><th>Strands Agents SDK</th><td>Open-source agent framework; the agent uses the same AQI and planning tools. Without a model key the app runs in deterministic mode.</td></tr>
@@ -159,5 +159,5 @@ Lucknow</textarea>
 </section>
 </main>
 <footer class="wrap foot">Data: Open-Meteo (CAMS air quality, weather). AQI: CPCB National AQI breakpoints. Guidance is general and not medical advice; follow CAQM/GRAP and state directives.</footer>
-<script src="/static/app.js?v=1791727284"></script>
+<script src="/static/app.js?v=1791727853"></script>
 </body></html>
