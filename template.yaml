@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SaansSafe - school air-quality decisions (FastAPI on Lambda via Mangum) + daily 07:00 IST alerts
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512
+Parameters:
+  AlertEmail:
+    Type: String
+    Default: ''
+    Description: Optional email to subscribe to the daily alert SNS topic (confirm via the SNS email)
+Conditions:
+  HasAlertEmail: !Not [!Equals [!Ref AlertEmail, '']]
+Resources:
+  SaansSafeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: app.handler
+      Runtime: python3.12
+      Environment:
+        Variables:
+          SAANSSAFE_PROVIDER: bedrock
+          BEDROCK_MODEL_ID: us.amazon.nova-lite-v1:0
+          SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          ALERTS_TOPIC_ARN: !Ref AlertsTopic
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SubscriptionsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt AlertsTopic.TopicName
+        - Statement:
+            - Effect: Allow
+              Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+              Resource: '*'
+      FunctionUrlConfig:
+        AuthType: NONE
+  DailyAlertsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: alerts_handler.handler
+      Runtime: python3.12
+      Timeout: 300
+      Environment:
+        Variables:
+          SUBSCRIPTIONS_TABLE: !Ref SubscriptionsTable
+          ALERTS_TOPIC_ARN: !Ref AlertsTopic
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref SubscriptionsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt AlertsTopic.TopicName
+      Events:
+        Morning7amIST:
+          Type: Schedule
+          Properties:
+            Name: saanssafe-daily-7am-ist
+            Description: Daily school air-quality alert at 07:00 IST (01:30 UTC)
+            Schedule: cron(30 1 * * ? *)
+            Enabled: true
+  SubscriptionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+  AlertsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: SaansSafe 7AM
+  AlertEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlertEmail
+    Properties:
+      TopicArn: !Ref AlertsTopic
+      Protocol: email
+      Endpoint: !Ref AlertEmail
+Outputs:
+  Url:
+    Value: !GetAtt SaansSafeFunctionUrl.FunctionUrl
+  AlertsTopicArn:
+    Value: !Ref AlertsTopic
+  SubscriptionsTableName:
+    Value: !Ref SubscriptionsTable

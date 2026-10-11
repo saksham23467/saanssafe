@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SaansSafe — school decisions for bad-air days</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head><body>
+<header class="top"><div class="wrap row">
+  <div class="brand"><span class="mark" aria-hidden="true"></span>SaansSafe <small>सांस सेफ</small></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab on" data-view="single" role="tab">One school</button>
+    <button class="tab" data-view="multi" role="tab">District view</button>
+    <button class="tab" data-view="alerts" role="tab">Morning alerts</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+<section id="single" class="view">
+  <form id="f" class="search">
+    <h1>Should the kids play outside today?</h1>
+    <p class="sub">Live air quality and weather turned into a clear plan for assembly, sports and a parent notice, using India's CPCB AQI.</p>
+    <div class="fields">
+      <label class="grow"><span>City or locality</span><input id="place" value="Delhi" required placeholder="e.g. Delhi, Lucknow, Noida"></label>
+      <label><span>School name</span><input id="school" value="Our School"></label>
+      <label class="sm"><span>Starts</span><input id="start" type="number" min="5" max="12" value="8"></label>
+      <label class="sm"><span>Ends</span><input id="end" type="number" min="10" max="18" value="14"></label>
+      <button class="primary" type="submit">Get today's plan</button>
+    </div>
+  </form>
+  <div id="err" class="err" hidden></div>
+  <div id="out" hidden>
+    <div class="grid2">
+      <article id="hero" class="hero"></article>
+      <article class="card">
+        <div class="eyebrow">Today's decision</div>
+        <h2 id="headline"></h2>
+        <ol id="actions" class="actions"></ol>
+      </article>
+    </div>
+    <article class="card">
+      <div class="cardhead"><div><div class="eyebrow">Hourly forecast</div><h3 id="charttitle">School-day air quality</h3></div>
+      <div id="window" class="pill"></div></div>
+      <div id="chart" class="chart"></div>
+      <p class="note">Hourly values are indicative CPCB sub-indices from forecast concentrations; the official AQI uses 24-hour averages.</p>
+    </article>
+    <article class="card">
+      <div class="eyebrow">7-day outlook</div><h3>Which days to plan indoor activities</h3>
+      <div id="outlook" class="outlook"></div>
+    </article>
+    <article class="card">
+      <div class="cardhead"><div><div class="eyebrow">Parent notice</div><h3>Ready to send</h3></div>
+        <div class="btns"><button id="copy" class="ghost">Copy</button><a id="wa" class="wa" target="_blank" rel="noopener">Share on WhatsApp</a></div></div>
+      <div class="notices">
+        <div class="notice"><div class="nhead"><b>English</b><span class="speak" data-src="en" data-lang="en-IN"><button class="ghost sm play" type="button">▶ Listen</button><button class="ghost sm stop" type="button" hidden>■ Stop</button></span></div><pre id="en"></pre></div>
+        <div class="notice"><div class="nhead"><b>हिंदी</b><span class="speak" data-src="hi" data-lang="hi-IN"><button class="ghost sm play" type="button">▶ सुनें / Listen</button><button class="ghost sm stop" type="button" hidden>■ Stop</button></span></div><pre id="hi" lang="hi"></pre></div>
+      </div>
+      <p id="voicehint" class="note" hidden></p>
+    </article>
+    <details class="card"><summary>Assistant summary <span id="mode" class="mode"></span></summary><p id="summary"></p></details>
+  </div>
+</section>
+
+<section id="multi" class="view" hidden>
+  <form id="mf" class="search">
+    <h1>Which schools need indoor schedules today?</h1>
+    <p class="sub">One locality per line. Ranked from most to least urgent.</p>
+    <textarea id="places" rows="5">Rohini, Delhi
+Dwarka, Delhi
+Noida
+Gurugram
+Faridabad
+Ghaziabad
+Lucknow</textarea>
+    <button class="primary" type="submit">Rank schools</button>
+  </form>
+  <div id="mout"></div>
+</section>
+<section id="alerts" class="view" hidden>
+  <form id="sf" class="search">
+    <h1>Get the plan every morning at 7 AM</h1>
+    <p class="sub">Subscribe a school once. Every day at 07:00 IST an Amazon EventBridge schedule runs a Lambda job that builds each school's plan and bilingual parent notice and delivers it.</p>
+    <div class="fields">
+      <label><span>School name</span><input id="sschool" required placeholder="e.g. DPS Rohini"></label>
+      <label class="grow"><span>City or locality</span><input id="splace" required placeholder="e.g. Rohini, Delhi"></label>
+      <label class="grow"><span>Email or WhatsApp number (optional)</span><input id="scontact" placeholder="principal@school.in or 98765 43210"></label>
+      <button class="primary" type="submit">Subscribe this school</button>
+    </div>
+    <div id="serr" class="err" hidden></div>
+  </form>
+  <article class="card">
+    <div class="cardhead"><div><div class="eyebrow">Subscribed schools</div><h3 id="subcount">No schools yet</h3></div>
+      <button id="runnow" class="primary" type="button">Preview tomorrow's 7 AM alert</button></div>
+    <div class="sched"><span class="awsbadge">Amazon EventBridge</span><code>cron(30 1 * * ? *)</code><span>= every day 07:00 IST → AWS Lambda <code>alerts_handler.handler</code> → DynamoDB subscribers → Amazon SNS</span></div>
+    <ul id="subs" class="subs"></ul>
+  </article>
+  <div id="aout"></div>
+  <article class="card">
+    <div class="eyebrow">Outbox</div><h3>Delivered alerts</h3>
+    <p class="note">Locally, alerts are written to an outbox. On AWS, the same job publishes to an SNS topic (email).</p>
+    <div id="outbox"></div>
+  </article>
+</section>
+</main>
+<footer class="wrap foot">Data: Open-Meteo (CAMS air quality, weather). AQI: CPCB National AQI breakpoints. Guidance is general and not medical advice; follow CAQM/GRAP and state directives.</footer>
+<script src="/static/app.js"></script>
+</body></html>

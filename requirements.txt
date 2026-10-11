@@ -1,0 +1,7 @@
+strands-agents>=1.0
+strands-agents-tools
+fastapi
+uvicorn[standard]
+mangum
+openai
+boto3
